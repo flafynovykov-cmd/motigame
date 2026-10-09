@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Моти ловит вкусняшки</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffe9ee;--bg2:#e9e4ff;--ink:#5a3d5c;--card:#fffafc;--pink:#ff8fab;--mint:#8fe3c8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2c2040;--bg2:#1f1a33;--ink:#ffe3ee;--card:#3b2c55}}
+:root[data-theme="dark"]{--bg:#2c2040;--bg2:#1f1a33;--ink:#ffe3ee;--card:#3b2c55}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%;background:var(--bg2)}
+body{margin:0;height:100vh;height:100dvh;background:linear-gradient(var(--bg),var(--bg2));color:var(--ink);font-family:'Baloo 2',ui-rounded,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 12px;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.top{width:min(100%,420px);display:flex;justify-content:space-between;font-size:20px;font-weight:800}
+.stage{flex:1;min-height:0;width:100%;display:flex;justify-content:center;align-items:center}
+.stage>*{flex:none;border-radius:28px;background:var(--card);box-shadow:0 6px 0 var(--pink);position:relative;overflow:hidden}
+.wrap{touch-action:none}
+canvas{width:100%;height:100%;display:block}
+.panel{overflow-y:auto;padding:14px;touch-action:pan-y;overscroll-behavior:contain}
+.panel h3{margin:10px 0 6px;font-size:20px}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;background:color-mix(in srgb,var(--card) 88%,transparent)}
+.overlay h1{margin:0;font-size:30px;line-height:1.1}
+.overlay p{margin:0;font-size:17px;max-width:28ch}
+button{font:inherit;font-size:22px;font-weight:800;color:#fff;background:var(--pink);border:0;border-radius:999px;padding:8px 32px;box-shadow:0 5px 0 #d9658a;cursor:pointer}
+button:active{transform:translateY(3px)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+nav{display:flex;gap:8px;width:min(100%,420px)}
+nav button{flex:1;font-size:14px;padding:10px 2px;box-shadow:0 3px 0 #d9658a;background:#c9a3d6}
+nav button.on{background:var(--pink)}
+.pb{position:absolute;top:10px;right:10px;width:44px;height:44px;padding:0;font-size:20px;box-shadow:0 3px 0 #d9658a;z-index:3}
+.cd{z-index:4}.cd h2{margin:0;font-size:64px;line-height:1}
+.ach{position:fixed;left:50%;top:60px;width:min(88%,380px);transform:translate(-50%,-30px);opacity:0;pointer-events:none;background:var(--card);border:4px solid var(--pink);border-radius:24px;padding:10px 14px;text-align:center;box-shadow:0 6px 0 var(--pink);transition:opacity .4s,transform .4s;z-index:9}
+.ach.show{opacity:1;transform:translate(-50%,0)}
+.ach b{display:block;font-size:22px;line-height:1.15}.ach span{font-size:15px}
+.it{display:grid;grid-template-columns:44px 1fr auto;gap:2px 10px;align-items:center;width:100%;margin:5px 0;text-align:left;font-size:17px;color:var(--ink);background:var(--bg);border-radius:18px;padding:8px 12px;box-shadow:0 3px 0 var(--pink)}
+.it small{grid-column:2;font-weight:500;font-size:13px}.it i{font-style:normal;grid-row:1;grid-column:3}
+.it.on{outline:3px solid var(--mint)}.it.no{outline:3px solid #e55}
+.sw{width:34px;height:34px;border-radius:50%;border:3px solid #e8b4c6;display:inline-block;grid-row:1/3;font-size:26px;text-align:center;line-height:28px}
+.ar{display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:2px dashed var(--bg)}
+.ar>span{font-size:32px;width:40px;text-align:center}.ar small{display:block;font-size:13px}.ar b{font-size:17px}
+.ar.lk{opacity:.55}
+.hide{display:none!important}
+.it b{min-width:0}.it i{white-space:nowrap}.it small{grid-column:2/4}
+@media (max-width:420px){.it{font-size:15px;padding:7px 10px}.it small{font-size:12px}.panel{padding:10px}}
+</style>
+</head>
+<body>
+<div class="top"><span id="score">🍓 0</span><span id="lives">💗💗💗</span><span id="coins">🍬 0</span></div>
+<div class="stage" id="stage">
+ <div class="wrap" id="wrap">
+  <canvas id="c" width="420" height="560"></canvas>
+  <button class="pb hide" id="pb" aria-label="Пауза">⏸</button>
+  <div class="overlay cd hide" id="cd"><h2 id="cdt">Пауза</h2><button id="resume">Продолжить</button></div>
+  <div class="overlay" id="menu">
+   <div style="font-size:60px">🍡</div>
+   <h1 id="title">Моти хочет вкусняшек!</h1>
+   <p id="hint">Води пальцем и лови вкусняшки. Лук 🧅 не лови! Остальное — во вкладке «Инфо».</p>
+   <button id="go">Играть</button>
+  </div>
+ </div>
+ <div class="panel hide" id="shop"></div>
+ <div class="panel hide" id="achs"></div>
+ <div class="panel hide" id="info"><h3>Как играть</h3>
+<div class="ar"><span>🍓</span><div><b>Лови вкусняшки</b><small>🍓🍪🍰🍩🍒 дают 1 очко, ⭐ — 2, 💎 — 3</small></div></div>
+<div class="ar"><span>🧅</span><div><b>Лук — мимо!</b><small>Отнимает жизнь. Всего жизней 3</small></div></div>
+<div class="ar"><span>💗</span><div><b>Сердечко</b><small>Падает каждые 20 очков и даёт лишнюю жизнь (максимум 4)</small></div></div>
+<div class="ar"><span>🍬</span><div><b>Конфетки</b><small>Все очки копятся в 🍬. Трать их в магазине на цвета, аксессуары и «Сладкий урожай»</small></div></div>
+<div class="ar"><span>✨</span><div><b>Сладкий урожай</b><small>Очки ×2, ×3, ×5 или ×10 на 20–60 секунд. Время идёт, только пока играешь</small></div></div>
+<div class="ar"><span>⏸</span><div><b>Пауза</b><small>После паузы идёт отсчёт 3…2…1</small></div></div></div>
+</div>
+<nav><button data-v="wrap" class="on">🎮 Игра</button><button data-v="achs">🏆 Награды</button><button data-v="shop">🛍 Магазин</button><button data-v="info">ℹ️ Инфо</button></nav>
+<div class="ach" id="ach"><div id="ai" style="font-size:36px"></div><b id="at"></b><span id="as"></span></div>
+<script>
+const $=id=>document.getElementById(id),cv=$('c'),ctx=cv.getContext('2d'),W=420,H=560;
+const SK={w:['Белый','#ffffff',0],p:['Розовый','#ffd1dc',60],m:['Мятный','#c8f5e4',120],l:['Лиловый','#e0d4ff',200],g:['Золотой','#ffe9a8',450],v:['Бледный вампир','#f3eaff',150],d:['Сумерки','#9b7fc4',220],b:['Бордо','#c4566f',300],u:['Пони розовая','#ff9ccf',150],y:['Пони небесная','#9fd8ff',150]};
+const HT={n:['Без аксессуара','',0],'🎀':['Бантик','🎀',90],'🌸':['Цветочек','🌸',160],'🍓':['Клубничка','🍓',240],'🎩':['Шляпка','🎩',360],'👑':['Корона','👑',700],'🦇':['Летучая мышка','🦇',260],'🌙':['Луна','🌙',300],'🩸':['Капелька крови','🩸',220]};
+const UP=[[2,180,60],[3,400,60],[5,750,45],[10,1500,20]],BT=60;
+const BG={n:['Обычный','🤍',0],sky:['Небо','☁️',120],night:['Звёздная ночь','🌌',200],sakura:['Сакура','🌸',260],candy:['Конфетный','🍭',320]};
+const EF={n:['Без эффекта','🚫',0],hearts:['Сердечки','💗',100],stars:['Звёздный взрыв','🌟',150],petals:['Лепестки','🌸',150],rainbow:['Радужное конфетти','🌈',220],trail:['Блестящий след','✨',260]};
+function bgDraw(){const b=S.bg;if(b==='n')return;const C={sky:['#bfe6ff','#eaf8ff'],night:['#1d1537','#4a2f7a'],sakura:['#ffd6e5','#fff0f5'],candy:['#ffd1e8','#d6f5ff']}[b],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,C[0]);g.addColorStop(1,C[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ ctx.font='26px serif';ctx.textAlign='center';ctx.globalAlpha=.7;const d={sky:'☁️',night:'⭐',sakura:'🌸',candy:'🍭'}[b];
+ for(let i=0;i<8;i++){const x=b==='sky'?(i*97+t*.3)%(W+40)-20:(i*61+37)%W+Math.sin(t/40+i)*8,y=b==='sky'?40+i*65:((i*83+t*(b==='sakura'?.6:.2))%(H+40))-20;ctx.fillText(d,x,y)}ctx.globalAlpha=1}
+const FX={fang:['Клыки','🦷',150],eyes:['Красные глаза','🔴',200],cape:['Плащ графини','🧛',350],horn:['Рог единорога','🦄',200],mane:['Радужная грива','🌈',250],wings:['Крылышки','🦋',300],mark:['Кьютимарка','💖',120]};
+let S={c:0,tot:0,best:0,sk:'w',hat:'n',own:['w','n'],fx:[],bg:'n',ef:'n',ub:0,bm:1,bt:0,ach:{},st:{stars:0,gems:0,hearts:0,games:0}};
+try{const x=JSON.parse(localStorage.getItem('mochi2'));if(x)S={...S,...x,st:{...S.st,...x.st}}}catch(e){}
+const save=()=>{try{localStorage.setItem('mochi2',JSON.stringify(S))}catch(e){}};
+const M=()=>S.bt>0?S.bm:1;
+const good=['🍓','🍪','🍰','🍩','🍒'],bad='🧅';
+let st='menu',score=0,lives=3,items=[],parts=[],t=0,px=W/2,tx=W/2,spawn=0,mouth=0,nh=20,cdT;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let score0,lt;
+const A=[
+['s25','🐰','Моя зайка','25 очков за игру',()=>score>=25],
+['s50','🍓','Сладкоежка','50 очков за одну игру',()=>score>=50],
+['s75','🌼','Ты просто чудо!','75 очков за игру',()=>score>=75],
+['s100','🌸','Ты крутая, но можешь быть лучше!','100 очков за игру',()=>score>=100],
+['s150','🌷','Самая красивая на свете','150 очков за игру',()=>score>=150],
+['s200','🏆','Любимая, ты крутая!','200 очков за игру',()=>score>=200],
+['s300','💌','Ты — моё солнышко ☀️','300 очков за игру',()=>score>=300],
+['s400','🧸','Обнимаю тебя крепко-крепко','400 очков за игру',()=>score>=400],
+['s500','👑','Королева вкусняшек!','500 очков за игру',()=>score>=500],
+['s750','💞','Люблю тебя до луны 🌙','750 очков за игру',()=>score>=750],
+['s1000','🚀','Легенда Моти','1000 очков за игру',()=>score>=1000],
+['s1500','🌈','Ты лучшая на свете!','1500 очков за игру',()=>score>=1500],
+['vamp','🦇','Маленькая вампирша','Купи вампирскую кастомизацию',()=>S.own.some(k=>['fang','cape','eyes','🦇','🌙','🩸','v','d','b'].includes(k))],
+['vfull','🧛','Графиня ночи','Надень полный вампирский образ: цвет, аксессуар, клыки, глаза и плащ',()=>['fang','eyes','cape'].every(k=>S.fx.includes(k))&&['🦇','🌙','🩸'].includes(S.hat)&&['v','d','b'].includes(S.sk)],
+['vall','🌙','Хранительница ночи','Собери всю вампирскую коллекцию (9 предметов)',()=>['fang','eyes','cape','🦇','🌙','🩸','v','d','b'].every(k=>S.own.includes(k))],
+['pfull','🦄','Принцесса пони','Надень всё из стиля пони: рог, гриву, крылышки и кьютимарку',()=>['horn','mane','wings','mark'].every(k=>S.fx.includes(k))],
+['pany','🌈','Радужная мечта','Купи что-нибудь из стиля пони',()=>S.own.some(k=>['horn','mane','wings','mark','u','y'].includes(k))],
+['s600','🦋','Бабочка-красавица','600 очков за игру',()=>score>=600],
+['s900','🍰','Ты моя сладость','900 очков за игру',()=>score>=900],
+['s2000','🌟','Ты — звезда!','2000 очков за игру',()=>score>=2000],
+['s3000','💎','Ты — мой бриллиант','3000 очков за игру',()=>score>=3000],
+['games25','🎀','Любимая игрунья','Сыграй 25 игр',()=>S.st.games>=25],
+['rich5','👛','Королева конфет','Собери 5000 🍬 за всё время',()=>S.tot>=5000],
+['big','🔥','Десять иксов!','Купи «Сладкий урожай» ×10',()=>S.st.big>0],
+['bg','🎨','Дизайнерша','Купи фон или эффект',()=>S.own.some(k=>['sky','night','sakura','candy','hearts','stars','petals','rainbow','trail'].includes(k))],
+['star','⭐','Звёздная девочка','Поймай 10 звёздочек',()=>S.st.stars>=10],
+['gem','💎','Охотница за алмазами','Поймай 5 алмазов',()=>S.st.gems>=5],
+['heart','💗','Полное сердечко','Поймай 5 сердечек',()=>S.st.hearts>=5],
+['game','🎮','Постоянная гостья','Сыграй 10 игр',()=>S.st.games>=10],
+['shop','🛍','Первая покупка','Купи что-нибудь в магазине',()=>S.own.length>2],
+['up','✨','Сладкий урожай','Включи сладкий урожай в магазине',()=>S.ub>0],
+['rich','🍬','Копилка','Собери 1000 🍬 за всё время',()=>S.tot>=1000]];
+let aq=[],ab=0;
+function chk(){for(const a of A)if(!S.ach[a[0]]&&a[4]()){S.ach[a[0]]=1;aq.push(a);if(!ab)nx()}save()}
+function nx(){const a=aq.shift();if(!a){ab=0;return}ab=1;$('ai').textContent=a[1];$('at').textContent=a[2];$('as').textContent=a[3];$('ach').classList.add('show');
+ if(st!=='menu'){const cs=['#ff8fab','#8fe3c8','#ffd166','#b8a1ff'];for(let i=0;i<6;i++)burst(40+Math.random()*(W-80),H*.3,cs[i%4])}
+ setTimeout(()=>{$('ach').classList.remove('show');setTimeout(nx,400)},3200)}
+function hud(){$('score').textContent='🍓 '+score;$('lives').textContent='💗'.repeat(Math.max(lives,0))+'🤍'.repeat(Math.max(3-lives,0));$('coins').textContent='🍬 '+S.c}
+function start(){score=0;lives=3;items=[];parts=[];spawn=0;mouth=0;nh=20;px=tx=W/2;clearInterval(cdT);$('cd').classList.add('hide');$('pb').classList.remove('hide');$('menu').classList.add('hide');st='play';hud()}
+function over(){st='menu';$('pb').classList.add('hide');S.st.games++;if(score>S.best)S.best=score;chk();
+ $('title').textContent=score>0&&score>=S.best?'Новый рекорд! 🎉':'Ой, сытый Моти!';
+ $('hint').textContent='Очки: '+score+' · Рекорд: '+S.best+'. Загляни в магазин 🛍';$('go').textContent='Ещё раз';$('menu').classList.remove('hide')}
+function pause(){if(st!=='play')return;st='pause';save();$('cdt').textContent='Пауза ⏸';$('resume').classList.remove('hide');$('cd').classList.remove('hide')}
+function resume(){if(st!=='pause')return;st='count';$('resume').classList.add('hide');let n=3;$('cdt').textContent=n;cdT=setInterval(()=>{n--;if(n>0)$('cdt').textContent=n;else{clearInterval(cdT);$('cd').classList.add('hide');st='play'}},1000)}
+$('pb').onclick=pause;$('resume').onclick=resume;$('go').onclick=start;
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
+const wr=$('wrap');
+function pos(e){const r=cv.getBoundingClientRect();tx=(e.clientX-r.left)/r.width*W}
+wr.addEventListener('pointermove',pos);wr.addEventListener('pointerdown',pos);
+addEventListener('keydown',e=>{if(e.key==='p'||e.key==='Escape')pause();if(e.key==='ArrowLeft')tx-=50;if(e.key==='ArrowRight')tx+=50});
+function fit(){const r=$('stage').getBoundingClientRect();const w=Math.min(r.width,420,r.height*.75),h=w*4/3;
+ for(const el of $('stage').children){el.style.width=w+'px';el.style.height=h+'px'}}
+addEventListener('resize',fit);addEventListener('orientationchange',fit);
+function view(v){for(const k of['wrap','shop','achs','info'])$(k).classList.toggle('hide',k!==v);
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+ if(v!=='wrap')pause();if(v==='shop')rShop();if(v==='achs')rAch()}
+document.querySelector('nav').onclick=e=>{const b=e.target.closest('button');if(b)view(b.dataset.v)};
+function card(t,k,n,pv,p){const own=S.own.includes(k),on=t==='fx'?S.fx.includes(k):S[t]===k;
+ return `<button class="it${on?' on':''}" data-t="${t}" data-k="${k}"><span class="sw" style="background:${t==='sk'?SK[k][1]:'transparent'};${t==='sk'?'':'border:0'}">${pv}</span><b>${n}</b><i>${on?'Надето ✓':own?'Надеть':'🍬 '+p}</i></button>`}
+function rShop(){let h=`<h3>У тебя 🍬 ${S.c}</h3><h3>Улучшение очков</h3>`;
+ if(S.bt>0)h+=`<p>Сейчас: ×${S.bm}, осталось ${Math.ceil(S.bt)} с игры ✨</p>`;
+ h+=UP.map(([m,p,sec],i)=>`<button class="it" data-t="u" data-k="${i}"><span class="sw">✨</span><b>Сладкий урожай ×${m}</b><i>🍬 ${p}</i><small>${sec} с игры: 🍓${m}, ⭐${2*m}, 💎${3*m}. Время идёт только в игре</small></button>`).join('');
+ h+='<h3>Цвет Моти</h3>'+Object.entries(SK).map(([k,v])=>card('sk',k,v[0],'',v[2])).join('');
+ h+='<h3>Аксессуары</h3>'+Object.entries(HT).map(([k,v])=>card('hat',k,v[0],v[1]||'—',v[2])).join('');
+ const fxs=ks=>ks.map(k=>card('fx',k,FX[k][0],FX[k][1],FX[k][2])).join('');h+='<h3>🦇 Вампирский стиль</h3>'+fxs(['fang','eyes','cape'])+'<h3>🦄 Стиль пони</h3>'+fxs(['horn','mane','wings','mark']);
+ h+='<h3>🌌 Фоны</h3>'+Object.entries(BG).map(([k,v])=>card('bg',k,v[0],v[1],v[2])).join('')+'<h3>✨ Эффекты</h3>'+Object.entries(EF).map(([k,v])=>card('ef',k,v[0],v[1],v[2])).join('');
+ $('shop').innerHTML=h}
+$('shop').onclick=e=>{const b=e.target.closest('button');if(!b)return;const t=b.dataset.t,k=b.dataset.k;
+ const no=()=>{b.classList.add('no');setTimeout(()=>b.classList.remove('no'),500)};
+ if(t==='u'){const [m,p,sec]=UP[k];if(S.c<p)return no();S.c-=p;S.bt=(S.bm===m&&S.bt>0?S.bt:0)+sec;S.bm=m;S.ub++;if(m>=10)S.st.big=1}
+ else if(t==='fx'){const p=FX[k][2];if(!S.own.includes(k)){if(S.c<p)return no();S.c-=p;S.own.push(k)}S.fx=S.fx.includes(k)?S.fx.filter(x=>x!==k):[...S.fx,k]}
+ else{const p=({sk:SK,hat:HT,bg:BG,ef:EF})[t][k][2];if(!S.own.includes(k)){if(S.c<p)return no();S.c-=p;S.own.push(k)}S[t]=k}
+ chk();hud();rShop()};
+function rAch(){const n=Object.keys(S.ach).length;$('achs').innerHTML=`<h3>Награды ${n} из ${A.length}</h3>`+A.map(a=>{const d=S.ach[a[0]];return `<div class="ar${d?'':' lk'}"><span>${d?a[1]:'🔒'}</span><div><b>${a[2]}</b><small>${a[3]}</small></div></div>`}).join('')}
+function burst(x,y,c){if(reduce)return;const e={hearts:'💗',stars:'🌟',petals:'🌸'}[S.ef],n=S.ef==='rainbow'?16:8;for(let i=0;i<n;i++)parts.push({x,y,vx:(Math.random()-.5)*5,vy:-Math.random()*4-1,l:30,e,c:S.ef==='rainbow'?'hsl('+(Math.random()*360|0)+',90%,65%)':c})}
+function drawMochi(x,y){
+ const sq=1+Math.sin(t/8)*.03,open=mouth>0;
+ ctx.save();ctx.translate(x,y);ctx.scale(1/sq,sq);
+ if(S.fx.includes('cape')){const w=Math.sin(t/12)*6;ctx.fillStyle='#d1305a';ctx.beginPath();ctx.moveTo(-30,-20);ctx.lineTo(30,-20);ctx.lineTo(52,50);ctx.lineTo(-52,50);ctx.fill();ctx.fillStyle='#8c1d3a';ctx.beginPath();ctx.moveTo(-36,-24);ctx.quadraticCurveTo(-82+w,6,-74+w,54);ctx.quadraticCurveTo(-56,40,-37,56);ctx.quadraticCurveTo(-18,42,0,56);ctx.quadraticCurveTo(18,42,37,56);ctx.quadraticCurveTo(56,40,74-w,54);ctx.quadraticCurveTo(82-w,6,36,-24);ctx.closePath();ctx.globalAlpha=.9;ctx.fill();ctx.globalAlpha=1}
+ if(S.fx.includes('wings')){ctx.fillStyle='#fff';ctx.strokeStyle='#e8b4c6';ctx.lineWidth=3;for(const s of[-1,1]){ctx.save();ctx.translate(s*44,-8);ctx.rotate(s*(.7+Math.sin(t/8)*.15));ctx.beginPath();ctx.ellipse(s*14,0,26,11,0,0,7);ctx.fill();ctx.stroke();ctx.restore()}}
+ ctx.fillStyle=SK[S.sk][1];ctx.strokeStyle='#e8b4c6';ctx.lineWidth=4;
+ ctx.beginPath();ctx.ellipse(0,0,46,38,0,0,7);ctx.fill();ctx.stroke();
+ ctx.fillStyle='#ffb3c7';ctx.beginPath();ctx.ellipse(-28,6,9,6,0,0,7);ctx.ellipse(28,6,9,6,0,0,7);ctx.fill();
+ ctx.fillStyle='#5a3d5c';
+ ctx.fillStyle=S.fx.includes('eyes')?'#e0143c':'#5a3d5c';if(t%160<6){ctx.fillRect(-22,-6,10,3);ctx.fillRect(12,-6,10,3)}else{ctx.beginPath();ctx.arc(-17,-5,5,0,7);ctx.arc(17,-5,5,0,7);ctx.fill()}
+ if(open){ctx.fillStyle='#d9658a';ctx.beginPath();ctx.ellipse(0,10,9,11,0,0,7);ctx.fill()}
+ else{ctx.strokeStyle='#5a3d5c';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,6,8,.15*Math.PI,.85*Math.PI);ctx.stroke()}
+ if(S.fx.includes('cape')){ctx.fillStyle='#8c1d3a';for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(s*44,-8);ctx.lineTo(s*34,-34);ctx.lineTo(s*16,-14);ctx.closePath();ctx.fill()}ctx.fillStyle='#ffd166';ctx.beginPath();ctx.arc(0,35,4.5,0,7);ctx.fill()}
+ if(S.fx.includes('mane')){const cs=['#ff6b8b','#ffb86b','#ffe66b','#8fe3a0','#7ec8ff','#b69cff'];cs.forEach((c,i)=>{const x=-32+i*11,y=-38*Math.sqrt(Math.max(0,1-(x/46)**2))+2+Math.sin(t/14+i)*1.5;ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(x,y,7,11,x/46*.8,0,7);ctx.fill()})}
+ if(S.fx.includes('horn')){ctx.fillStyle='#ffe27a';ctx.strokeStyle='#e0b84a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-7,-34);ctx.lineTo(0,-72);ctx.lineTo(7,-34);ctx.closePath();ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-5,-44);ctx.lineTo(5,-48);ctx.moveTo(-4,-54);ctx.lineTo(4,-58);ctx.stroke()}
+ if(S.fx.includes('mark')){ctx.font='16px serif';ctx.textAlign='center';ctx.fillText('💖',31,24)}
+ if(S.fx.includes('fang')){ctx.fillStyle='#fff';ctx.strokeStyle='#8a5a7a';ctx.lineWidth=1.5;for(const s of[-1,1]){const y=open?4:10;ctx.beginPath();ctx.moveTo(s*6-3,y);ctx.lineTo(s*6+3,y);ctx.lineTo(s*6,y+9);ctx.closePath();ctx.fill();ctx.stroke()}}
+ if(S.hat!=='n'){ctx.font='32px serif';ctx.textAlign='center';ctx.fillText(S.hat,0,-26)}
+ ctx.restore();
+}
+function loop(){
+ requestAnimationFrame(loop);t++;const now=performance.now(),dt=Math.min(.1,(now-(lt||now))/1000);lt=now;
+ ctx.clearRect(0,0,W,H);bgDraw();
+ ctx.font='28px serif';ctx.textAlign='center';ctx.globalAlpha=.5;
+ for(let i=0;i<6;i++)ctx.fillText('✨',(i*97+t*.1)%W,60+i*80+Math.sin(t/30+i)*6);
+ ctx.globalAlpha=1;
+ if(st==='play'){
+  tx=Math.min(W-66,Math.max(66,tx));px+=(tx-px)*.25;if(S.ef==='trail'&&!reduce&&Math.abs(tx-px)>3)parts.push({x:px+(Math.random()-.5)*30,y:H-40,vx:0,vy:-.5,l:24,c:'hsl('+(t*9%360)+',90%,70%)'});if(S.bt>0)S.bt=Math.max(0,S.bt-dt);
+  const d=score/M();
+  spawn--;if(spawn<=0){items.push({x:30+Math.random()*(W-60),y:-20,v:1.6+Math.min(d/35,2.4)+Math.random()*.5,e:(q=>q<.2?bad:q<.3?'⭐':q<.34?'💎':good[Math.random()*5|0])(Math.random())});spawn=Math.max(36,60-d*.4)}
+  if(score>=nh){items.push({x:30+Math.random()*(W-60),y:-20,v:1.8,e:'💗'});nh+=20}
+  const my=H-70;if(mouth>0)mouth--;
+  for(const it of items){it.y+=it.v;
+   if(Math.abs(it.x-px)<48&&Math.abs(it.y-my)<40&&!it.d){it.d=1;mouth=10;
+    if(it.e===bad){lives--;burst(it.x,it.y,'#9ad')}
+    else if(it.e==='💗'){lives=Math.min(4,lives+1);S.st.hearts++;burst(it.x,it.y,'#ff5c8a')}
+    else{const b=it.e==='💎'?3:it.e==='⭐'?2:1,s=b*M();score+=s;S.c+=s;S.tot+=s;if(b==3)S.st.gems++;if(b==2)S.st.stars++;burst(it.x,it.y,b>2?'#7fd6ff':b>1?'#ffd166':'#ff8fab')}
+    chk();hud();if(lives<=0)over()}
+   if(it.y>H+30)it.d=1}
+  items=items.filter(i=>!i.d);
+ }
+ ctx.font='36px serif';
+ for(const it of items)ctx.fillText(it.e,it.x,it.y+12);
+ for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=.25;p.l--;ctx.globalAlpha=p.l/30;if(p.e){ctx.font='18px serif';ctx.fillText(p.e,p.x,p.y)}else{ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,4,0,7);ctx.fill()}}
+ ctx.globalAlpha=1;parts=parts.filter(p=>p.l>0);
+ if(S.bt>0&&st!=='menu'){ctx.font='800 20px "Baloo 2",sans-serif';ctx.textAlign='left';ctx.fillStyle='#d9658a';ctx.fillText('✨ ×'+S.bm+' · '+Math.ceil(S.bt)+' с',12,30);ctx.textAlign='center'}
+ drawMochi(st==='menu'?W/2:px,H-70);
+}
+fit();hud();loop();
+</script>
+</body>
+</html>
